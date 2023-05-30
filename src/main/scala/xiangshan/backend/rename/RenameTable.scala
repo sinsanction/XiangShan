@@ -36,7 +36,7 @@ class RatWritePort(implicit p: Parameters) extends XSBundle {
 
 class RenameTable(float: Boolean)(implicit p: Parameters) extends XSModule {
   val io = IO(new Bundle {
-    val readPorts = Vec({if(float) 4 else 3} * RenameWidth, new RatReadPort)
+    val readPorts = Vec({if(float) RatFpPortNum else RatIntPortNum} * RenameWidth, new RatReadPort)
     val specWritePorts = Vec(CommitWidth, Input(new RatWritePort))
     val archWritePorts = Vec(CommitWidth, Input(new RatWritePort))
     val debug_rdata = Vec(32, Output(UInt(PhyRegIdxWidth.W)))
@@ -89,9 +89,9 @@ class RenameTable(float: Boolean)(implicit p: Parameters) extends XSModule {
 class RenameTableWrapper(implicit p: Parameters) extends XSModule {
   val io = IO(new Bundle() {
     val robCommits = Flipped(new RobCommitIO)
-    val intReadPorts = Vec(RenameWidth, Vec(3, new RatReadPort))
+    val intReadPorts = Vec(RenameWidth, Vec(RatIntPortNum, new RatReadPort))
     val intRenamePorts = Vec(RenameWidth, Input(new RatWritePort))
-    val fpReadPorts = Vec(RenameWidth, Vec(4, new RatReadPort))
+    val fpReadPorts = Vec(RenameWidth, Vec(RatFpPortNum, new RatReadPort))
     val fpRenamePorts = Vec(RenameWidth, Input(new RatWritePort))
     // for debug printing
     val debug_int_rat = Vec(32, Output(UInt(PhyRegIdxWidth.W)))

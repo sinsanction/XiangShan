@@ -110,6 +110,7 @@ class ExeUnit(config: ExuConfig)(implicit p: Parameters) extends Exu(config) {
 }
 
 class AluExeUnit(implicit p: Parameters) extends ExeUnit(AluExeUnitCfg)
+class CvpuExeUnit(implicit p: Parameters) extends ExeUnit(CvpuExeUnitCfg)
 class JumpCSRExeUnit(implicit p: Parameters) extends ExeUnit(JumpCSRExeUnitCfg)
 class JumpExeUnit(implicit p: Parameters) extends ExeUnit(JumpExeUnitCfg)
 class StdExeUnit(implicit p: Parameters) extends ExeUnit(StdExeUnitCfg)
@@ -121,6 +122,7 @@ object ExeUnitDef {
     cfg match {
       case JumpExeUnitCfg => Definition(new JumpExeUnit)
       case AluExeUnitCfg => Definition(new AluExeUnit)
+      case CvpuExeUnitCfg => Definition(new CvpuExeUnit)
       case MulDivExeUnitCfg => Definition(new MulDivExeUnit)
       case JumpCSRExeUnitCfg => Definition(new JumpCSRExeUnit)
       case FmacExeUnitCfg => Definition(new FmacExeUnit)

@@ -82,6 +82,7 @@ class MinimalConfig(n: Int = 1) extends Config(
         exuParameters = ExuParameters(
           JmpCnt = 1,
           AluCnt = 2,
+          CvpuCnt = 2,
           MulCnt = 0,
           MduCnt = 1,
           FmacCnt = 1,

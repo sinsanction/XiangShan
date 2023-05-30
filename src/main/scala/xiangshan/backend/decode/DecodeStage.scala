@@ -31,8 +31,8 @@ class DecodeStage(implicit p: Parameters) extends XSModule with HasPerfEvents {
     // to Rename
     val out = Vec(DecodeWidth, DecoupledIO(new CfCtrl))
     // RAT read
-    val intRat = Vec(RenameWidth, Vec(3, Flipped(new RatReadPort)))
-    val fpRat = Vec(RenameWidth, Vec(4, Flipped(new RatReadPort)))
+    val intRat = Vec(RenameWidth, Vec(RatIntPortNum, Flipped(new RatReadPort)))
+    val fpRat = Vec(RenameWidth, Vec(RatFpPortNum, Flipped(new RatReadPort)))
     // csr control
     val csrCtrl = Input(new CustomCSRCtrlIO)
     // perf only
@@ -52,16 +52,17 @@ class DecodeStage(implicit p: Parameters) extends XSModule with HasPerfEvents {
     io.in(i).ready       := io.out(i).ready
 
     // We use the lsrc/ldest before fusion decoder to read RAT for better timing.
-    io.intRat(i)(0).addr := decoders(i).io.deq.cf_ctrl.ctrl.lsrc(0)
-    io.intRat(i)(1).addr := decoders(i).io.deq.cf_ctrl.ctrl.lsrc(1)
-    io.intRat(i)(2).addr := decoders(i).io.deq.cf_ctrl.ctrl.ldest
+    for (j <- 0 until RatIntPortNum - 1) {
+      io.intRat(i)(j).addr := decoders(i).io.deq.cf_ctrl.ctrl.lsrc(j)
+    }
+    io.intRat(i)(RatIntPortNum - 1).addr := decoders(i).io.deq.cf_ctrl.ctrl.ldest
     io.intRat(i).foreach(_.hold := !io.out(i).ready)
 
     // Floating-point instructions can not be fused now.
-    io.fpRat(i)(0).addr := decoders(i).io.deq.cf_ctrl.ctrl.lsrc(0)
-    io.fpRat(i)(1).addr := decoders(i).io.deq.cf_ctrl.ctrl.lsrc(1)
-    io.fpRat(i)(2).addr := decoders(i).io.deq.cf_ctrl.ctrl.lsrc(2)
-    io.fpRat(i)(3).addr := decoders(i).io.deq.cf_ctrl.ctrl.ldest
+    for (j <- 0 until RatFpPortNum - 1) {
+      io.fpRat(i)(j).addr := decoders(i).io.deq.cf_ctrl.ctrl.lsrc(j)
+    }
+    io.fpRat(i)(RatFpPortNum - 1).addr := decoders(i).io.deq.cf_ctrl.ctrl.ldest
     io.fpRat(i).foreach(_.hold := !io.out(i).ready)
   }
 

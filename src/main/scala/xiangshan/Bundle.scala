@@ -149,6 +149,12 @@ class FPUCtrlSignals(implicit p: Parameters) extends XSBundle {
   val rm = UInt(3.W)
 }
 
+class CVPUCtrlSignals(implicit p: Parameters) extends XSBundle {
+  val sew = UInt(2.W)
+  val algorithm = UInt(2.W)
+  val window = UInt(2.W)
+}
+
 // Decode DecodeWidth insts at Decode Stage
 class CtrlSignals(implicit p: Parameters) extends XSBundle {
   val srcType = Vec(3, SrcType())
@@ -166,6 +172,7 @@ class CtrlSignals(implicit p: Parameters) extends XSBundle {
   val imm = UInt(ImmUnion.maxLen.W)
   val commitType = CommitType()
   val fpu = new FPUCtrlSignals
+  val cvpu = new CVPUCtrlSignals
   val isMove = Bool()
   val singleStep = Bool()
   // This inst will flush all the pipe when it is the oldest inst in ROB,

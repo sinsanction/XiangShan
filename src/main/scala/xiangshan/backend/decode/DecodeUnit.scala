@@ -25,6 +25,7 @@ import utils._
 import xiangshan.ExceptionNO.illegalInstr
 import xiangshan._
 import freechips.rocketchip.rocket.Instructions._
+import xiangshan.backend.decode.isa.cvpdecode.CVPInstructions._
 
 /**
  * Abstract trait giving defaults and other relevant values to different Decode constants/
@@ -444,6 +445,24 @@ object XSTrapDecode extends DecodeConstants {
   )
 }
 
+object CVPDecode extends DecodeConstants {
+  val table: Array[(BitPat, List[BitPat])] = Array(
+    CONV       -> List(SrcType.reg, SrcType.reg, SrcType.reg, FuType.cvpu, CVPUOpType.conv,     Y, N, N, N, N, N, SelImm.X),
+
+    POOLMAX    -> List(SrcType.reg, SrcType.reg, SrcType.X,   FuType.cvpu, CVPUOpType.poolMax,  Y, N, N, N, N, N, SelImm.X),
+    POOLAVG    -> List(SrcType.reg, SrcType.reg, SrcType.X,   FuType.cvpu, CVPUOpType.poolAvg,  Y, N, N, N, N, N, SelImm.X),
+
+    ACTRELU    -> List(SrcType.reg, SrcType.reg, SrcType.X,   FuType.cvpu, CVPUOpType.actRelu,  Y, N, N, N, N, N, SelImm.X),
+    ACTRELU6   -> List(SrcType.reg, SrcType.reg, SrcType.X,   FuType.cvpu, CVPUOpType.actRelu6, Y, N, N, N, N, N, SelImm.X),
+
+    ADDN       -> List(SrcType.reg, SrcType.reg, SrcType.reg, FuType.cvpu, CVPUOpType.add,      Y, N, N, N, N, N, SelImm.X),
+    ADDRELU    -> List(SrcType.reg, SrcType.reg, SrcType.reg, FuType.cvpu, CVPUOpType.addRelu,  Y, N, N, N, N, N, SelImm.X),
+
+    POOLMMAX   -> List(SrcType.reg, SrcType.X,   SrcType.X,   FuType.cvpu, CVPUOpType.poolMMax, Y, N, N, N, N, N, SelImm.X),
+    POOLMAVG   -> List(SrcType.reg, SrcType.X,   SrcType.X,   FuType.cvpu, CVPUOpType.poolMAvg, Y, N, N, N, N, N, SelImm.X),
+  )
+}
+
 //object Imm32Gen {
 //  def apply(sel: UInt, inst: UInt) = {
 //    val sign = Mux(sel === SelImm.IMM_Z, 0.S, inst(31).asSInt)
@@ -584,7 +603,8 @@ class DecodeUnit(implicit p: Parameters) extends XSModule with DecodeUnitConstan
     XSTrapDecode.table ++
     BDecode.table ++
     CBODecode.table ++
-    SvinvalDecode.table
+    SvinvalDecode.table ++
+    CVPDecode.table
   // assertion for LUI: only LUI should be assigned `selImm === SelImm.IMM_U && fuType === FuType.alu`
   val luiMatch = (t: Seq[BitPat]) => t(3).value == FuType.alu.litValue && t.reverse.head.value == SelImm.IMM_U.litValue
   val luiTable = decode_table.filter(t => luiMatch(t._2)).map(_._1).distinct
@@ -600,15 +620,29 @@ class DecodeUnit(implicit p: Parameters) extends XSModule with DecodeUnitConstan
   fpDecoder.io.instr := ctrl_flow.instr
   cs.fpu := fpDecoder.io.fpCtrl
 
+  // rv-cvp
+  cs.cvpu.sew := ctrl_flow.instr(26, 25)
+  cs.cvpu.algorithm := ctrl_flow.instr(21, 20)
+  cs.cvpu.window := ctrl_flow.instr(29, 28)
+
+  val src2IsRd = ctrl_flow.instr(6, 0) === "b0001011".U && ctrl_flow.instr(14, 12) === "b010".U      //Cvpu.pool
+  val src3IsRd = ctrl_flow.instr(6, 0) === "b0001011".U && ctrl_flow.instr(14, 12) === "b000".U      //Cvpu.conv
+  val src3IsHint = ctrl_flow.instr(6, 0) === "b0001011".U && ctrl_flow.instr(14, 12) === "b101".U    //Cvpu.add
+
   val isMove = BitPat("b000000000000_?????_000_?????_0010011") === ctrl_flow.instr
   cs.isMove := isMove && ctrl_flow.instr(RD_MSB, RD_LSB) =/= 0.U && !io.csrCtrl.singlestep && io.csrCtrl.move_elim_enable
 
   // read src1~3 location
-  cs.lsrc(0) := ctrl_flow.instr(RS1_MSB, RS1_LSB)
-  cs.lsrc(1) := ctrl_flow.instr(RS2_MSB, RS2_LSB)
-  cs.lsrc(2) := ctrl_flow.instr(RS3_MSB, RS3_LSB)
+  val instRs1 = ctrl_flow.instr(RS1_MSB, RS1_LSB)
+  val instRs2 = ctrl_flow.instr(RS2_MSB, RS2_LSB)
+  val instRs3 = ctrl_flow.instr(RS3_MSB, RS3_LSB)
+  val instRd = ctrl_flow.instr(RD_MSB, RD_LSB)
+
+  cs.lsrc(0) := instRs1
+  cs.lsrc(1) := Mux(src2IsRd, instRd, instRs2)
+  cs.lsrc(2) := Mux(src3IsRd, instRd, Mux(src3IsHint, 13.U, instRs3))
   // read dest location
-  cs.ldest := ctrl_flow.instr(RD_MSB, RD_LSB)
+  cs.ldest := instRd
 
   // fill in exception vector
   cf_ctrl.cf.exceptionVec := io.enq.ctrl_flow.exceptionVec

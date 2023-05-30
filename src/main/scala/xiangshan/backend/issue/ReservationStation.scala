@@ -46,6 +46,7 @@ case class RSParams
   // special cases
   var isJump: Boolean = false,
   var isAlu: Boolean = false,
+  val isCvpu: Boolean = false,
   var isStore: Boolean = false,
   var isStoreData: Boolean = false,
   var isMul: Boolean = false,
@@ -84,6 +85,7 @@ class ReservationStationWrapper(implicit p: Parameters) extends LazyModule with 
     cfg match {
       case JumpCSRExeUnitCfg => params.isJump = true
       case AluExeUnitCfg => params.isAlu = true
+      case CvpuExeUnitCfg => params.isCvpu = true
       case StaExeUnitCfg => params.isStore = true
       case StdExeUnitCfg => params.isStoreData = true
       case MulDivExeUnitCfg => params.isMul = true
@@ -153,6 +155,7 @@ class ReservationStationWrapper(implicit p: Parameters) extends LazyModule with 
 
     if (params.isJump)      rs.zipWithIndex.foreach { case (rs, index) => rs.suggestName(s"jumpRS_${index}") }
     if (params.isAlu)       rs.zipWithIndex.foreach { case (rs, index) => rs.suggestName(s"aluRS_${index}") }
+    if (params.isCvpu)      rs.zipWithIndex.foreach { case (rs, index) => rs.suggestName(s"cvpuRS_${index}") }
     if (params.isStore)     rs.zipWithIndex.foreach { case (rs, index) => rs.suggestName(s"staRS_${index}") }
     if (params.isStoreData) rs.zipWithIndex.foreach { case (rs, index) => rs.suggestName(s"stdRS_${index}") }
     if (params.isMul)       rs.zipWithIndex.foreach { case (rs, index) => rs.suggestName(s"mulRS_${index}") }

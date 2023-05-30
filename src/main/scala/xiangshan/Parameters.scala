@@ -128,6 +128,8 @@ case class XSCoreParameters
   DecodeWidth: Int = 6,
   RenameWidth: Int = 6,
   CommitWidth: Int = 6,
+  RatIntPortNum: Int = 4,
+  RatFpPortNum: Int = 4,
   FtqSize: Int = 64,
   EnableLoadFastWakeUp: Boolean = true, // NOTE: not supported now, make it false
   IssQueSize: Int = 16,
@@ -148,6 +150,7 @@ case class XSCoreParameters
   exuParameters: ExuParameters = ExuParameters(
     JmpCnt = 1,
     AluCnt = 4,
+    CvpuCnt = 4,
     MulCnt = 0,
     MduCnt = 2,
     FmacCnt = 4,
@@ -250,6 +253,7 @@ case class XSCoreParameters
   val storeExuConfigs = Seq.fill(exuParameters.StuCnt)(StaExeUnitCfg) ++ Seq.fill(exuParameters.StuCnt)(StdExeUnitCfg)
 
   val intExuConfigs = (Seq.fill(exuParameters.AluCnt)(AluExeUnitCfg) ++
+    Seq.fill(exuParameters.CvpuCnt)(CvpuExeUnitCfg) ++
     Seq.fill(exuParameters.MduCnt)(MulDivExeUnitCfg) :+ JumpCSRExeUnitCfg)
 
   val fpExuConfigs =
@@ -365,6 +369,8 @@ trait HasXSParameter {
   val DecodeWidth = coreParams.DecodeWidth
   val RenameWidth = coreParams.RenameWidth
   val CommitWidth = coreParams.CommitWidth
+  val RatIntPortNum = coreParams.RatIntPortNum
+  val RatFpPortNum = coreParams.RatFpPortNum
   val FtqSize = coreParams.FtqSize
   val IssQueSize = coreParams.IssQueSize
   val EnableLoadFastWakeUp = coreParams.EnableLoadFastWakeUp
@@ -405,7 +411,7 @@ trait HasXSParameter {
   val l2tlbParams = coreParams.l2tlbParameters
   val NumPerfCounters = coreParams.NumPerfCounters
 
-  val NumRs = (exuParameters.JmpCnt+1)/2 + (exuParameters.AluCnt+1)/2 + (exuParameters.MulCnt+1)/2 +
+  val NumRs = (exuParameters.JmpCnt+1)/2 + (exuParameters.AluCnt+1)/2 + (exuParameters.CvpuCnt+1)/2 + (exuParameters.MulCnt+1)/2 +
               (exuParameters.MduCnt+1)/2 + (exuParameters.FmacCnt+1)/2 +  + (exuParameters.FmiscCnt+1)/2 +
               (exuParameters.FmiscDivSqrtCnt+1)/2 + (exuParameters.LduCnt+1)/2 +
               ((exuParameters.StuCnt+1)/2) + ((exuParameters.StuCnt+1)/2)

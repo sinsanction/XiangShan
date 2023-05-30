@@ -38,8 +38,8 @@ class Rename(implicit p: Parameters) extends XSModule with HasPerfEvents {
     // waittable read result
     val waittable = Flipped(Vec(RenameWidth, Output(Bool())))
     // to rename table
-    val intReadPorts = Vec(RenameWidth, Vec(3, Input(UInt(PhyRegIdxWidth.W))))
-    val fpReadPorts = Vec(RenameWidth, Vec(4, Input(UInt(PhyRegIdxWidth.W))))
+    val intReadPorts = Vec(RenameWidth, Vec(RatIntPortNum, Input(UInt(PhyRegIdxWidth.W))))
+    val fpReadPorts = Vec(RenameWidth, Vec(RatFpPortNum, Input(UInt(PhyRegIdxWidth.W))))
     val intRenamePorts = Vec(RenameWidth, Output(new RatWritePort))
     val fpRenamePorts = Vec(RenameWidth, Output(new RatWritePort))
     // to dispatch1
@@ -143,7 +143,7 @@ class Rename(implicit p: Parameters) extends XSModule with HasPerfEvents {
         uops(i).psrc(1) := 0.U
       }
     }
-    uops(i).psrc(2) := io.fpReadPorts(i)(2)
+    uops(i).psrc(2) := Mux(uops(i).ctrl.srcType(2) === SrcType.reg, io.intReadPorts(i)(2), io.fpReadPorts(i)(2))
     uops(i).old_pdest := Mux(uops(i).ctrl.rfWen, io.intReadPorts(i).last, io.fpReadPorts(i).last)
     uops(i).eliminatedMove := isMove(i)
 

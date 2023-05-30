@@ -70,15 +70,18 @@ package object xiangshan {
     def stu          = "b1101".U
     def mou          = "b1111".U // for amo, lr, sc, fence
 
+    def cvpu         = "b1001".U
+
     def X            = BitPat("b????")
 
-    def num = 14
+    def num = 15
 
     def apply() = UInt(log2Up(num).W)
 
-    def isIntExu(fuType: UInt) = !fuType(3)
+    def isCvpu(fuType: UInt) = fuType === cvpu
+    def isIntExu(fuType: UInt) = !fuType(3) || isCvpu
     def isJumpExu(fuType: UInt) = fuType === jmp
-    def isFpExu(fuType: UInt) = fuType(3, 2) === "b10".U
+    def isFpExu(fuType: UInt) = fuType(3, 2) === "b10".U && !isCvpu
     def isMemExu(fuType: UInt) = fuType(3, 2) === "b11".U
     def isLoadStore(fuType: UInt) = isMemExu(fuType) && !fuType(1)
     def isStoreExu(fuType: UInt) = isMemExu(fuType) && fuType(0)
@@ -116,6 +119,7 @@ package object xiangshan {
       ldu.litValue() -> "load",
       stu.litValue() -> "store",
       mou.litValue() -> "mou"
+      cvpu.litValue() -> "cvpu"
     )
   }
 
@@ -492,6 +496,28 @@ package object xiangshan {
     def apply() = UInt(2.W)
   }
 
+  object CVPUOpType {
+    def dummy       = "b11111".U // exu not implemented
+    def conv        = "b00000".U // conv
+    def poolMax     = "b00001".U // pool.max
+    def poolAvg     = "b00010".U // pool.avg
+    def actRelu     = "b00011".U // act.relu
+    def actRelu6    = "b00100".U // act.relu6
+    def add         = "b00101".U // add.n
+    def addRelu     = "b00110".U // add.relu
+    def poolMMax    = "b00111".U // pool.m.max
+    def poolMAvg    = "b01000".U // pool.m.avg
+  }
+
+  object CvpuElementFormat {
+    def e2  = "b00".U
+    def e4  = "b01".U
+    def e8  = "b10".U
+    def e16 = "b11".U
+
+    def apply() = UInt(2.W)
+  }
+
   object SelImm {
     def IMM_X  = "b0111".U
     def IMM_S  = "b0000".U
@@ -575,6 +601,7 @@ package object xiangshan {
   def fdivSqrtGen(p: Parameters) = new FDivSqrt()(p)
   def stdGen(p: Parameters) = new Std()(p)
   def mouDataGen(p: Parameters) = new Std()(p)
+  def cvpuGen(p: Parameters) = new Cvpu()(p)
 
   def f2iSel(uop: MicroOp): Bool = {
     uop.ctrl.rfWen
@@ -604,6 +631,17 @@ package object xiangshan {
     writeIntRf = true,
     writeFpRf = false,
     hasRedirect = true,
+  )
+
+  val cvpuCfg = FuConfig(
+    name = "cvpu",
+    fuGen = cvpuGen,
+    fuSel = (uop: MicroOp) => uop.ctrl.fuType === FuType.cvpu,
+    fuType = FuType.cvpu,
+    numIntSrc = 3,
+    numFpSrc = 0,
+    writeIntRf = true,
+    writeFpRf = false,
   )
 
   val jmpCfg = FuConfig(
@@ -777,6 +815,7 @@ package object xiangshan {
 
   val JumpExeUnitCfg = ExuConfig("JmpExeUnit", "Int", Seq(jmpCfg, i2fCfg), 2, Int.MaxValue)
   val AluExeUnitCfg = ExuConfig("AluExeUnit", "Int", Seq(aluCfg), 0, Int.MaxValue)
+  val CvpuExeUnitCfg = ExuConfig("CvpuExeUnit", "Int", Seq(cvpuCfg), 0, Int.MaxValue)
   val JumpCSRExeUnitCfg = ExuConfig("JmpCSRExeUnit", "Int", Seq(jmpCfg, csrCfg, fenceCfg, i2fCfg), 2, Int.MaxValue)
   val MulDivExeUnitCfg = ExuConfig("MulDivExeUnit", "Int", Seq(mulCfg, divCfg, bkuCfg), 1, Int.MaxValue)
   val FmacExeUnitCfg = ExuConfig("FmacExeUnit", "Fp", Seq(fmacCfg), Int.MaxValue, 0)

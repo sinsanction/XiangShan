@@ -156,15 +156,17 @@ abstract class XSCoreBase(val parentName:String = "Unknown")(implicit p: config.
   require(exuParameters.MduCnt <= exuParameters.AluCnt && exuParameters.MduCnt > 0)
   require(exuParameters.FmiscCnt <= exuParameters.FmacCnt && exuParameters.FmiscCnt > 0)
   require(exuParameters.LduCnt == 2 && exuParameters.StuCnt == 2)
+  require(exuParameters.AluCnt == exuParameters.CvpuCnt)
 
   // one RS every 2 MDUs
   val schedulePorts = Seq(
     // exuCfg, numDeq, intFastWakeupTarget, fpFastWakeupTarget
     Seq(
-      (AluExeUnitCfg, exuParameters.AluCnt, Seq(AluExeUnitCfg, LdExeUnitCfg, StaExeUnitCfg), Seq()),
-      (MulDivExeUnitCfg, exuParameters.MduCnt, Seq(AluExeUnitCfg, MulDivExeUnitCfg), Seq()),
+      (AluExeUnitCfg, exuParameters.AluCnt, Seq(AluExeUnitCfg, CvpuExeUnitCfg, LdExeUnitCfg, StaExeUnitCfg), Seq()),
+      (CvpuExeUnitCfg, exuParameters.CvpuCnt, Seq(AluExeUnitCfg, CvpuExeUnitCfg, LdExeUnitCfg, StaExeUnitCfg), Seq()),
+      (MulDivExeUnitCfg, exuParameters.MduCnt, Seq(AluExeUnitCfg, CvpuExeUnitCfg, MulDivExeUnitCfg), Seq()),
       (JumpCSRExeUnitCfg, 1, Seq(), Seq()),
-      (LdExeUnitCfg, exuParameters.LduCnt, Seq(AluExeUnitCfg, LdExeUnitCfg), Seq()),
+      (LdExeUnitCfg, exuParameters.LduCnt, Seq(AluExeUnitCfg, CvpuExeUnitCfg, LdExeUnitCfg), Seq()),
       (StaExeUnitCfg, exuParameters.StuCnt, Seq(), Seq()),
       (StdExeUnitCfg, exuParameters.StuCnt, Seq(), Seq())
     ),
@@ -195,16 +197,16 @@ abstract class XSCoreBase(val parentName:String = "Unknown")(implicit p: config.
 
   // allow mdu and fmisc to have 2*numDeq enqueue ports
   val intDpPorts = (0 until exuParameters.AluCnt).map(i => {
-    if (i < exuParameters.JmpCnt) Seq((0, i), (1, i), (2, i))
-    else if (i < 2 * exuParameters.MduCnt) Seq((0, i), (1, i))
-    else Seq((0, i))
+    if (i < exuParameters.JmpCnt) Seq((0, i), (1, i), (2, i), (3, i))
+    else if (i < 2 * exuParameters.MduCnt) Seq((0, i), (1, i), (2, i))
+    else Seq((0, i), (1, i))
   })
   val lsDpPorts = Seq(
-    Seq((3, 0)),
-    Seq((3, 1)),
     Seq((4, 0)),
-    Seq((4, 1))
-  ) ++ (0 until exuParameters.StuCnt).map(i => Seq((5, i)))
+    Seq((4, 1)),
+    Seq((5, 0)),
+    Seq((5, 1))
+  ) ++ (0 until exuParameters.StuCnt).map(i => Seq((6, i)))
   val fpDpPorts = (0 until exuParameters.FmacCnt).map(i => {
     if (i < 2 * exuParameters.FmiscCnt) Seq((0, i), (1, i))
     else Seq((0, i))
