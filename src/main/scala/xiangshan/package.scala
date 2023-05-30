@@ -21,6 +21,7 @@ import freechips.rocketchip.tile.XLen
 import xiangshan.ExceptionNO._
 import xiangshan.backend.fu._
 import xiangshan.backend.fu.fpu._
+import xiangshan.backend.fu.cvpu._
 import xiangshan.backend.exu._
 import xiangshan.backend.Std
 
@@ -79,9 +80,9 @@ package object xiangshan {
     def apply() = UInt(log2Up(num).W)
 
     def isCvpu(fuType: UInt) = fuType === cvpu
-    def isIntExu(fuType: UInt) = !fuType(3) || isCvpu
+    def isIntExu(fuType: UInt) = !fuType(3) || isCvpu(fuType)
     def isJumpExu(fuType: UInt) = fuType === jmp
-    def isFpExu(fuType: UInt) = fuType(3, 2) === "b10".U && !isCvpu
+    def isFpExu(fuType: UInt) = fuType(3, 2) === "b10".U && !isCvpu(fuType)
     def isMemExu(fuType: UInt) = fuType(3, 2) === "b11".U
     def isLoadStore(fuType: UInt) = isMemExu(fuType) && !fuType(1)
     def isStoreExu(fuType: UInt) = isMemExu(fuType) && fuType(0)
@@ -118,7 +119,7 @@ package object xiangshan {
       fDivSqrt.litValue() -> "fdiv/fsqrt",
       ldu.litValue() -> "load",
       stu.litValue() -> "store",
-      mou.litValue() -> "mou"
+      mou.litValue() -> "mou",
       cvpu.litValue() -> "cvpu"
     )
   }

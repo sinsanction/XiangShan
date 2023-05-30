@@ -46,7 +46,7 @@ case class RSParams
   // special cases
   var isJump: Boolean = false,
   var isAlu: Boolean = false,
-  val isCvpu: Boolean = false,
+  var isCvpu: Boolean = false,
   var isStore: Boolean = false,
   var isStoreData: Boolean = false,
   var isMul: Boolean = false,

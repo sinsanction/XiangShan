@@ -5,6 +5,7 @@ import chisel3._
 import chisel3.util._
 import utils._
 import xiangshan._
+import xiangshan.backend.fu._
 
 class CvpuDataIO(implicit p: Parameters) extends XSBundle {
   val src       = Input(Vec(3, UInt(XLEN.W)))
@@ -70,15 +71,15 @@ class CvpuDataModule(implicit p: Parameters) extends XSModule {
   poolmavg_Module.io.window := io.window
 
   io.result := LookupTree(io.opcode, List(
-    CvpuType.conv     -> conv_Module.io.res_data,
-    CvpuType.poolMax  -> poolmax_Module.io.res_data,
-    CvpuType.poolAvg  -> poolavg_Module.io.res_data,
-    CvpuType.actRelu  -> actrelu_Module.io.res_data,
-    CvpuType.actRelu6 -> actrelu6_Module.io.res_data,
-    CvpuType.add      -> add_Module.io.res_data,
-    CvpuType.addRelu  -> addrelu_Module.io.res_data,
-    CvpuType.poolMMax -> poolmmax_Module.io.res_data,
-    CvpuType.poolMAvg -> poolmavg_Module.io.res_data
+    CVPUOpType.conv     -> conv_Module.io.res_data,
+    CVPUOpType.poolMax  -> poolmax_Module.io.res_data,
+    CVPUOpType.poolAvg  -> poolavg_Module.io.res_data,
+    CVPUOpType.actRelu  -> actrelu_Module.io.res_data,
+    CVPUOpType.actRelu6 -> actrelu6_Module.io.res_data,
+    CVPUOpType.add      -> add_Module.io.res_data,
+    CVPUOpType.addRelu  -> addrelu_Module.io.res_data,
+    CVPUOpType.poolMMax -> poolmmax_Module.io.res_data,
+    CVPUOpType.poolMAvg -> poolmavg_Module.io.res_data
   ))
 }
 
