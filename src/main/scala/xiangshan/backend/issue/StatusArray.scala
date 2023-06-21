@@ -55,7 +55,7 @@ class StatusEntry(params: RSParams)(implicit p: Parameters) extends XSBundle {
   def canIssue: Bool = {
     val scheduledCond = if (params.needScheduledBit) !scheduled else true.B
     val blockedCond = if (params.checkWaitBit) !blocked else true.B
-    val checkedSrcState = if (params.numSrc > 2) srcState.take(2) else srcState
+    val checkedSrcState = if (params.numSrc > 2 && !params.isCvpu) srcState.take(2) else srcState
     val midStateReady = if (params.hasMidState) srcState.last && midState else false.B
     (VecInit(checkedSrcState).asUInt.andR && scheduledCond || midStateReady) && blockedCond
   }

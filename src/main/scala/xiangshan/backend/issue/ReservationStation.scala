@@ -609,7 +609,7 @@ class ReservationStation(params: RSParams)(implicit p: Parameters) extends XSMod
     val s1_issue_oldest_dup = oldestSelection_dup.io.isOverrided
     for (i <- 0 until params.numDeq) {
       val uop = s1_dispatchUops_dup.last(i)
-      val is_ready = (0 until 2).map(j => uop.bits.srcIsReady(j) || s1_enqWakeup(i)(j).asUInt.orR || s1_fastWakeup(i)(j).asUInt.orR)
+      val is_ready = (0 until params.numSrc).map(j => uop.bits.srcIsReady(j) || s1_enqWakeup(i)(j).asUInt.orR || s1_fastWakeup(i)(j).asUInt.orR)
       val canBypass = uop.valid && VecInit(is_ready).asUInt.andR
       io.fastWakeup.get(i).valid := s1_issue_oldest_dup(i) || select_ptr_dup(i).valid || canBypass
       io.fastWakeup.get(i).bits := Mux(s1_issue_oldest_dup(i), oldest_uop_dup,
