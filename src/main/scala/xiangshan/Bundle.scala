@@ -259,7 +259,7 @@ class MicroOp(implicit p: Parameters) extends CfCtrl {
     this
   }
   // Assume only the LUI instruction is decoded with IMM_U in ALU.
-  def isLUI: Bool = ctrl.selImm === SelImm.IMM_U && ctrl.fuType === FuType.alu
+  def isLUI: Bool = (ctrl.selImm === SelImm.IMM_U || ctrl.selImm === SelImm.IMM_LUI32) && ctrl.fuType === FuType.alu
   // This MicroOp is used to wakeup another uop (the successor: (psrc, srcType).
   def wakeup(successor: Seq[(UInt, UInt)], exuCfg: ExuConfig): Seq[(Bool, Bool)] = {
     successor.map{ case (src, srcType) =>

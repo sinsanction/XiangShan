@@ -21,6 +21,7 @@ import chisel3._
 import chisel3.util._
 import utility.{LookupTree, LookupTreeDefault, ParallelMux, SignExt, ZeroExt}
 import xiangshan._
+import utils._
 
 class AddModule(implicit p: Parameters) extends XSModule {
   val io = IO(new Bundle() {
@@ -271,9 +272,9 @@ class AluDataModule(implicit p: Parameters) extends XSModule {
   // Now we assume shadd has the worst timing.
   addModule.io.src(0) := Mux(func(3), shaddSource(func(2, 1)),
     Mux(func(2), sraddSource(func(1, 0)),
-    Mux(func(1), ZeroExt(src1(0), XLEN), wordMaskAddSource))
+    Mux(func(1), Mux(func(0), SignExt(src2(11, 0), XLEN), ZeroExt(src1(0), XLEN)), wordMaskAddSource))
   )
-  addModule.io.src(1) := src2
+  addModule.io.src(1) := Mux(func(3, 0) === "b0011".U, Cat(src2(63, 12), 0.U(12.W)), src2)
   val add = addModule.io.add
 
   // sub
@@ -365,6 +366,9 @@ class AluDataModule(implicit p: Parameters) extends XSModule {
   io.result := aluRes
   io.taken := taken
   io.mispredict := (io.pred_taken ^ taken) && io.isBranch
+
+  XSDebug(func === ALUOpType.lui32add, p"[alu] func lui32: src1=${Hexadecimal(src1)} src2=${Hexadecimal(src2)} alures=${Hexadecimal(aluRes)}\n")
+  XSDebug(func === ALUOpType.lui32add, p"[alu] func lui32: add_src1=${Hexadecimal(addModule.io.src(0))} add_src2=${Hexadecimal(addModule.io.src(1))} addres=${Hexadecimal(add)}\n")
 }
 
 class Alu(implicit p: Parameters) extends FUWithRedirect {
