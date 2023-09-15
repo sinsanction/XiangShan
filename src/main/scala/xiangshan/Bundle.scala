@@ -303,6 +303,9 @@ class Redirect(implicit p: Parameters) extends XSBundle {
   val stFtqIdx = new FtqPtr // for load violation predict
   val stFtqOffset = UInt(log2Up(PredictWidth).W)
 
+  val next_valid = Bool()
+  val next_ftqIdx = new FtqPtr
+
   val debug_runahead_checkpoint_id = UInt(64.W)
   val debugIsCtrl = Bool()
   val debugIsMemVio = Bool()
