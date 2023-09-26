@@ -118,6 +118,8 @@ class MemBlockImp(outer: MemBlock) extends LazyModuleImp(outer)
     val sqCancelCnt = Output(UInt(log2Up(StoreQueueSize + 1).W))
     val sqDeq = Output(UInt(log2Ceil(EnsbufferWidth + 1).W))
     val lqDeq = Output(UInt(log2Up(CommitWidth + 1).W))
+    val lqDeqPtr = Output(new LqPtr)
+    val sqDeqPtr = Output(new SqPtr)
     val debug_ls = new DebugLSIO
   })
   dontTouch(io)
@@ -579,6 +581,8 @@ class MemBlockImp(outer: MemBlock) extends LazyModuleImp(outer)
   // LSQ to store buffer
   lsq.io.sbuffer        <> sbuffer.io.in
   lsq.io.sqEmpty        <> sbuffer.io.sqempty
+  io.lqDeqPtr           <> lsq.io.lqDeqPtr
+  io.sqDeqPtr           <> lsq.io.sqDeqPtr
 
   // Sbuffer
   sbuffer.io.csrCtrl    <> csrCtrl

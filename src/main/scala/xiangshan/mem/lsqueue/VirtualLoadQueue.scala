@@ -40,7 +40,8 @@ class VirtualLoadQueue(implicit p: Parameters) extends XSModule
     val ldWbPtr = Output(new LqPtr)
     val lqFull = Output(Bool())
     val lqDeq = Output(UInt(log2Up(CommitWidth + 1).W))
-    val lqCancelCnt = Output(UInt(log2Up(VirtualLoadQueueSize+1).W))   
+    val lqCancelCnt = Output(UInt(log2Up(VirtualLoadQueueSize+1).W))
+    val lqDeqPtr = Output(new LqPtr)
   })
 
   println("VirtualLoadQueue: size: " + VirtualLoadQueueSize)
@@ -121,6 +122,7 @@ class VirtualLoadQueue(implicit p: Parameters) extends XSModule
   val deqPtrUpdateEna = lastCommitCount =/= 0.U 
   deqPtrNext := deqPtr + lastCommitCount
   deqPtr := RegEnable(next = deqPtrNext, init = 0.U.asTypeOf(new LqPtr), enable = deqPtrUpdateEna)
+  io.lqDeqPtr := deqPtr
 
   io.lqDeq := RegNext(lastCommitCount)
   io.lqCancelCnt := RegNext(lastCycleCancelCount + lastEnqCancel)

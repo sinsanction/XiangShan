@@ -192,6 +192,7 @@ class LoadQueue(implicit p: Parameters) extends XSModule
     val lqCancelCnt = Output(UInt(log2Up(VirtualLoadQueueSize+1).W))
     val lqReplayFull = Output(Bool())
     val tlbReplayDelayCycleCtrl = Vec(4, Input(UInt(ReSelectLen.W)))
+    val lqDeqPtr = Output(new LqPtr)
   })
 
   val loadQueueRAR = Module(new LoadQueueRAR)  //  read-after-read violation
@@ -288,6 +289,8 @@ class LoadQueue(implicit p: Parameters) extends XSModule
                                         )
   io.rollback.valid := rollbackSelV.head
   io.rollback.bits := rollbackSelBits.head
+
+  io.lqDeqPtr := virtualLoadQueue.io.lqDeqPtr
 
   /* <------- DANGEROUS: Don't change sequence here ! -------> */
 
