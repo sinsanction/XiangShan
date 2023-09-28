@@ -299,6 +299,7 @@ object Bundles {
     val vxrm      = Vxrm()
     // vector uop index, exclude other non-vector uop
     val vuopIdx   = UopIdx()
+    val lastUop   = Bool()
     // maybe used if data dependancy
     val vmask     = UInt(MaskSrcData().dataWidth.W)
     val vl        = Vl()

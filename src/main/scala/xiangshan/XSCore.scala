@@ -130,6 +130,8 @@ class XSCoreImp(outer: XSCoreBase) extends LazyModuleImp(outer)
   backend.io.mem.lsqEnqIO <> memBlock.io.enqLsq
   backend.io.mem.sqDeq := memBlock.io.sqDeq
   backend.io.mem.lqDeq := memBlock.io.lqDeq
+  backend.io.mem.sqDeqPtr := memBlock.io.sqDeqPtr
+  backend.io.mem.lqDeqPtr := memBlock.io.lqDeqPtr
   backend.io.mem.lqCancelCnt := memBlock.io.lqCancelCnt
   backend.io.mem.sqCancelCnt := memBlock.io.sqCancelCnt
   backend.io.mem.otherFastWakeup := memBlock.io.otherFastWakeup

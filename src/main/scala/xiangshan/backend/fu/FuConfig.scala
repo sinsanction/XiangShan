@@ -144,7 +144,7 @@ case class FuConfig (
 
   def needVecCtrl: Boolean = {
     import FuType._
-    Set(vipu, vialuF, vimac, vfpu, vppu, vfalu, vfma, vfdiv).contains(fuType)
+    Set(vipu, vialuF, vimac, vfpu, vppu, vfalu, vfma, vfdiv, vldu, vstu).contains(fuType)
   }
 
   def isMul: Boolean = fuType == FuType.mul

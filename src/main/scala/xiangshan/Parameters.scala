@@ -366,9 +366,14 @@ case class XSCoreParameters
         ExeUnitParams("STD1", Seq(StdCfg, MoudCfg), Seq(), Seq(Seq(IntRD(6, Int.MaxValue), VfRD(10, Int.MaxValue)))),
       ), numEntries = IssueQueueSize, numEnq = 2),
       IssueBlockParams(Seq(
-        ExeUnitParams("VLDU0", Seq(VlduCfg), Seq(VfWB(port = 6, 1)), Seq(Seq(VfRD(port = 0, 0)), Seq(VfRD(port = 1, 0)), Seq(VfRD(port = 2, 0)), Seq(VfRD(port = 3, 0)), Seq(VfRD(port = 4, 0)))),
-        ExeUnitParams("VLDU1", Seq(VlduCfg), Seq(VfWB(port = 7, 1)), Seq(Seq(VfRD(port = 5, 0)), Seq(VfRD(port = 6, 0)), Seq(VfRD(port = 7, 0)), Seq(VfRD(port = 8, 0)), Seq(VfRD(port = 9, 0)))),
-      ), numEntries = IssueQueueSize, numEnq = 2),
+        ExeUnitParams("VLDU0", Seq(VlduCfg), Seq(VfWB(port = 6, 1)), Seq(Seq(VfRD(port = 0, 0)), Seq(VfRD(port = 1, 0)), Seq(VfRD(port = 2, 0)), Seq(VfRD(port = 5, 0)), Seq(VfRD(port = 6, 0)))),
+      ), numEntries = IssueQueueSize / 2, numEnq = 2),
+      //IssueBlockParams(Seq(
+      //  ExeUnitParams("VSTA0", Seq(VstaCfg), Seq(VfWB(port = 7, 1)), Seq(Seq(VfRD(port = 5, 0)), Seq(VfRD(port = 6, 0)), Seq(VfRD(port = 7, 0)), Seq(VfRD(port = 8, 0)), Seq(VfRD(port = 9, 0)))),
+      //), numEntries = IssueQueueSize / 2, numEnq = 2),
+      //IssueBlockParams(Seq(
+      //  ExeUnitParams("VSTD0", Seq(VstdCfg), Seq(), Seq(Seq(VfRD(port = 11, Int.MaxValue)))),
+      //), numEntries = IssueQueueSize / 2, numEnq = 2),
     ),
       numPregs = intPreg.numEntries max vfPreg.numEntries,
       numDeqOutside = 0,
