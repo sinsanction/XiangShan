@@ -246,7 +246,7 @@ class Entries(implicit p: Parameters, params: IssueBlockParams) extends XSModule
 
   deqSelVec.zip(deqPortIdxWriteVec).zipWithIndex.foreach { case ((deqSel, deqPortIdxWrite), i) =>
     val deqVec = io.deq.map(x => x.finalDeqSelOH.valid && x.finalDeqSelOH.bits(i))
-    deqPortIdxWrite := OHToUInt(deqVec)
+    deqPortIdxWrite := !deqVec.head
     deqSel := deqVec.reduce(_ | _)
   }
 

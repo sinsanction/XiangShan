@@ -398,7 +398,7 @@ class IssueQueueImp(override val wrapper: IssueQueue)(implicit p: Parameters, va
 
   othersEntryOldestSel.zipWithIndex.foreach { case (sel, deqIdx) =>
     sel := AgeDetector(numEntries = params.numEntries - params.numEnq,
-        enq = VecInit(transCanAcceptVec(deqIdx).zip(transSelVec).map{ case(doCanAccept, transSel) => Mux(doCanAccept, transSel, 0.U)}),
+        enq = VecInit(transCanAcceptVec(deqIdx).zip(transSelVec).map{ case(doCanAccept, transSel) => Fill(params.numEntries-params.numEnq, doCanAccept) & transSel }),
         deq = VecInit(clearVec.drop(params.numEnq)).asUInt,
         canIssue = canIssueMergeAllBusy(deqIdx)(params.numEntries-1, params.numEnq)
       )
