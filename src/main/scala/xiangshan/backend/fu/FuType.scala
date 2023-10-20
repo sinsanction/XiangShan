@@ -125,7 +125,10 @@ object FuType extends OHEnumeration {
     }
 
     def apply(fuType: UInt, fus: Seq[OHType]): Bool = {
-      fus.map(x => fuType(x.id)).reduce(_ || _)
+      if (fus.nonEmpty)
+        fus.map(x => fuType(x.id)).reduce(_ || _)
+      else
+        false.B
     }
   }
 
