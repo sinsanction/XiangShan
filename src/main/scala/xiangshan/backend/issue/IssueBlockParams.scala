@@ -106,6 +106,10 @@ case class IssueBlockParams(
 
   def numDeq: Int = numDeqOutside + exuBlockParams.length
 
+  def num1stHalf: Int = (numEntries - numEnq) / 2
+
+  def num2ndHalf: Int = numEntries - numEnq - num1stHalf
+
   def JmpCnt: Int = exuBlockParams.map(_.fuConfigs.count(_.fuType == FuType.jmp)).sum
 
   def BrhCnt: Int = exuBlockParams.map(_.fuConfigs.count(_.fuType == FuType.brh)).sum
