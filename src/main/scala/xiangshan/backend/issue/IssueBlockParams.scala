@@ -18,6 +18,7 @@ case class IssueBlockParams(
   exuBlockParams     : Seq[ExeUnitParams],
   numEntries         : Int,
   numEnq             : Int,
+  numComp            : Int,
   numDeqOutside      : Int = 0,
   numWakeupFromOthers: Int = 0,
   XLEN               : Int = 64,

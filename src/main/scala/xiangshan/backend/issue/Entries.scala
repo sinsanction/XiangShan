@@ -154,7 +154,9 @@ class Entries(implicit p: Parameters, params: IssueBlockParams) extends XSModule
 
   //Module
   val enqEntries = Seq.fill(EnqEntryNum)(Module(EnqEntry(p, params)))
-  val othersEntries = Seq.fill(OthersEntryNum)(Module(OthersEntry(p, params)))
+  val othersEntriesComp = Seq.fill(params.numComp)(Module(OthersEntry(true)(p, params)))
+  val othersEntriesSimp = Seq.fill(OthersEntryNum - params.numComp)(Module(OthersEntry(false)(p, params)))
+  val othersEntries = othersEntriesComp.take(params.numComp / 2) ++ othersEntriesSimp ++ othersEntriesComp.takeRight(params.numComp - params.numComp / 2)
   val transPolicy = Module(new EnqPolicy)
 
   //Wire

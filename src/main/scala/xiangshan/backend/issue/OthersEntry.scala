@@ -51,7 +51,7 @@ class OthersEntryIO(implicit p: Parameters, params: IssueBlockParams) extends XS
   def wakeup = wakeUpFromWB ++ wakeUpFromIQ
 }
 
-class OthersEntry(implicit p: Parameters, params: IssueBlockParams) extends XSModule {
+class OthersEntry(isComp: Boolean)(implicit p: Parameters, params: IssueBlockParams) extends XSModule {
   val io = IO(new OthersEntryIO)
 
   val validReg = RegInit(false.B)
@@ -238,7 +238,8 @@ class OthersEntry(implicit p: Parameters, params: IssueBlockParams) extends XSMo
   }
 
   //output
-  val canIssue = entryReg.status.canIssue && validReg && !srcCancelVec.getOrElse(false.B).asUInt.orR
+  val canIssue = if (isComp) entryReg.status.canIssue && validReg && !srcCancelVec.getOrElse(false.B).asUInt.orR
+                 else entryReg.status.canIssue && validReg
   val canIssueBypass = validReg && !entryReg.status.issued && !entryReg.status.blocked &&
     VecInit(entryReg.status.srcState.zip(srcWakeUpByIQWithoutCancel).zipWithIndex.map { case ((state, wakeupVec), srcIdx) =>
       val cancel = srcCancelVec.map(_ (srcIdx)).getOrElse(false.B)
@@ -276,9 +277,11 @@ class OthersEntry(implicit p: Parameters, params: IssueBlockParams) extends XSMo
           srcTimerOut := srcTimer
         }
     }
-    io.srcWakeUpL1ExuOH.get := Mux(canIssueBypass && !canIssue, srcWakeUpL1ExuOHOut.get, regSrcWakeUpL1ExuOH.get)
+    io.srcWakeUpL1ExuOH.get := (if (isComp) Mux(canIssueBypass && !canIssue, srcWakeUpL1ExuOHOut.get, regSrcWakeUpL1ExuOH.get)
+                                else regSrcWakeUpL1ExuOH.get)
   }
-  io.canIssue := (canIssue || canIssueBypass) && !flushed
+  io.canIssue := (if (isComp) (canIssue || canIssueBypass) && !flushed
+                  else canIssue && !flushed)
   io.clear := clear
   io.fuType := IQFuType.readFuType(entryReg.status.fuType, params.getFuCfgs.map(_.fuType)).asUInt
   io.valid := validReg
@@ -286,14 +289,15 @@ class OthersEntry(implicit p: Parameters, params: IssueBlockParams) extends XSMo
   io.isFirstIssue := !entryReg.status.firstIssue
   io.entry.valid := validReg
   io.entry.bits := entryReg
-  io.entry.bits.status.srcLoadDependency.foreach(_ := Mux(canIssueBypass && !canIssue, srcLoadDependencyOut.get, entryReg.status.srcLoadDependency.get))
+  io.entry.bits.status.srcLoadDependency.foreach(_ := (if (isComp) Mux(canIssueBypass && !canIssue, srcLoadDependencyOut.get, entryReg.status.srcLoadDependency.get)
+                                                       else entryReg.status.srcLoadDependency.get))
   io.robIdx := entryReg.status.robIdx
   io.issueTimerRead := entryReg.status.issueTimer
   io.deqPortIdxRead := entryReg.status.deqPortIdx
   io.cancel.foreach(_ := cancelVec.get.asUInt.orR)
 }
 
-class OthersEntryMem()(implicit p: Parameters, params: IssueBlockParams) extends OthersEntry
+class OthersEntryMem(isComp: Boolean)(implicit p: Parameters, params: IssueBlockParams) extends OthersEntry(isComp)
   with HasCircularQueuePtrHelper {
 
   val fromMem = io.fromMem.get
@@ -343,13 +347,13 @@ class OthersEntryMem()(implicit p: Parameters, params: IssueBlockParams) extends
 }
 
 object OthersEntry {
-  def apply(implicit p: Parameters, iqParams: IssueBlockParams): OthersEntry = {
+  def apply(isComp: Boolean)(implicit p: Parameters, iqParams: IssueBlockParams): OthersEntry = {
     iqParams.schdType match {
-      case IntScheduler() => new OthersEntry()
+      case IntScheduler() => new OthersEntry(isComp)
       case MemScheduler() =>
-        if (iqParams.StdCnt == 0) new OthersEntryMem()
-        else new OthersEntry()
-      case VfScheduler() => new OthersEntry()
+        if (iqParams.StdCnt == 0) new OthersEntryMem(isComp)
+        else new OthersEntry(isComp)
+      case VfScheduler() => new OthersEntry(isComp)
       case _ => null
     }
   }
