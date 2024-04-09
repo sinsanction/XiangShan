@@ -306,7 +306,7 @@ class CtrlBlockImp(
     val shouldFlushMask = (1 to RenameWidth).map(shouldFlush take _ reduce (_ || _))
     s1_s3_redirect.valid && Cat(shouldFlushMask.zip(notCFIMask).map(x => x._1 | x._2)).andR
   })
-  val flushVecNext = VecInit(flushVec.map(x => GatedValidRegNext(x, false.B)))
+  val flushVecNext = flushVec zip snpt.io.valids map { x => RegEnable(x._1, false.B, x._2) }
   snpt.io.flushVec := flushVecNext
 
   val useSnpt = VecInit.tabulate(RenameSnapshotNum)(idx =>
