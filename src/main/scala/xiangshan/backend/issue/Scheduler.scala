@@ -103,6 +103,10 @@ class SchedulerIO()(implicit params: SchdBlockParams, p: Parameters) extends XSB
     def apply(i: Int)(j: Int) = resp(i)(j)
   }
 
+  val toDataPath = new Bundle {
+    val cancelVec = OptionWrapper(params.needReadRegCache, Vec(RegCacheSize, Output(Bool())))
+  }
+
   val loadFinalIssueResp = MixedVec(params.issueBlockParams.map(x => MixedVec(Vec(x.LdExuCnt, Flipped(ValidIO(new IssueQueueDeqRespBundle()(p, x)))))))
   val memAddrIssueResp = MixedVec(params.issueBlockParams.map(x => MixedVec(Vec(x.LdExuCnt, Flipped(ValidIO(new IssueQueueDeqRespBundle()(p, x)))))))
   val vecLoadIssueResp = MixedVec(params.issueBlockParams.map(x => MixedVec(Vec(x.VlduCnt, Flipped(ValidIO(new IssueQueueDeqRespBundle()(p, x)))))))
@@ -446,6 +450,8 @@ abstract class SchedulerImpBase(wrapper: Scheduler)(implicit params: SchdBlockPa
     println(s"[Scheduler] numWriteRegCache: ${params.numWriteRegCache}")
     println(s"[Scheduler] iqReplaceRCIdxVec: ${iqReplaceRCIdxVec.size}")
   }
+
+  io.toDataPath.cancelVec.foreach(_ := rcTagTable.get.io.cancelVec)
 
   // perfEvent
   val lastCycleDp2IqOutFireVec = RegNext(VecInit(dispatch2Iq.io.out.flatten.map(_.fire)))

@@ -104,6 +104,8 @@ class RegCacheTagTable(numReadPorts: Int)(implicit p: Parameters, schdParams: Sc
   (IntRCTagTable.io.cancelVec ++ MemRCTagTable.io.cancelVec).zip(cancelVec).foreach{ case (cancelIn, cancel) => 
     cancelIn := cancel
   }
+
+  io.cancelVec := cancelVec.map(GatedValidRegNext(_))
 }
 
 class RegCacheTagTableIO(numReadPorts: Int)(implicit p: Parameters, schdParams: SchdBlockParams) extends XSBundle {
@@ -120,4 +122,7 @@ class RegCacheTagTableIO(numReadPorts: Int)(implicit p: Parameters, schdParams: 
 
   // cancelFromMem
   val ldCancel = Vec(backendParams.LdExuCnt, Flipped(new LoadCancelIO))
+
+  // cancelToRegCacheData
+  val cancelVec = Vec(RegCacheSize, Output(Bool()))
 }

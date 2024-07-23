@@ -49,6 +49,8 @@ class RegCacheDataModule
   val io = IO(new Bundle() {
     val readPorts = Vec(numReadPorts, new RCReadPort(dataWidth, addrWidth))
     val writePorts = Vec(numWritePorts, new RCWritePort(dataWidth, addrWidth, tagWidth, backendParams.debugEn))
+
+    val cancelVec = Vec(numEntries, Input(Bool()))
     val validInfo = Vec(numEntries, Output(Bool()))
   })
 
@@ -79,6 +81,10 @@ class RegCacheDataModule
       v(i)   := true.B
       mem(i) := wData
     }
+    .elsewhen (io.cancelVec(i)) {
+      v(i)   := false.B
+    }
+
     if (backendParams.debugEn) {
       val wTag = Mux1H(wenOH, io.writePorts.map(_.tag.get))
       when (wenOH.asUInt.orR) {

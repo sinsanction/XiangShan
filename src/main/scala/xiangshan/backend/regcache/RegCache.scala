@@ -115,6 +115,10 @@ class RegCache()(implicit p: Parameters, params: BackendParams) extends XSModule
   writePorts.zip(delayToWakeupQueueRCIdx).foreach{ case (w, rcIdx) => 
     w.addr := rcIdx
   }
+
+  (IntRegCache.io.cancelVec ++ MemRegCache.io.cancelVec).zip(io.fromRCTagTableCancelVec).foreach{ case (cancelIn, cancel) => 
+    cancelIn := cancel
+  }
 }
 
 class RegCacheIO()(implicit p: Parameters, params: BackendParams) extends XSBundle {
@@ -127,4 +131,6 @@ class RegCacheIO()(implicit p: Parameters, params: BackendParams) extends XSBund
 
   val toWakeupQueueRCIdx = Vec(params.getIntExuRCWriteSize + params.getMemExuRCWriteSize, 
      Output(UInt(RegCacheIdxWidth.W)))
+
+  val fromRCTagTableCancelVec = Vec(RegCacheSize, Input(Bool()))
 }

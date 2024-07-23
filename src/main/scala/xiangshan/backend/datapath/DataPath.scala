@@ -453,6 +453,7 @@ class DataPathImp(override val wrapper: DataPath)(implicit p: Parameters, params
   io.toWakeupQueueRCIdx := regCache.io.toWakeupQueueRCIdx
   io.toBypassNetworkRCData := s1_RCReadData
   regCache.io.writePorts := io.fromBypassNetwork
+  regCache.io.fromRCTagTableCancelVec := io.fromRCTagTableCancelVec
 
   val s1_addrOHs = Reg(MixedVec(
     fromIQ.map(x => MixedVec(x.map(_.bits.addrOH.cloneType).toSeq)).toSeq
@@ -869,6 +870,8 @@ class DataPathIO()(implicit p: Parameters, params: BackendParams) extends XSBund
   val toWakeupQueueRCIdx: Vec[UInt] = Vec(params.getIntExuRCWriteSize + params.getMemExuRCWriteSize, 
     Output(UInt(RegCacheIdxWidth.W))
   )
+
+  val fromRCTagTableCancelVec: Vec[Bool] = Vec(RegCacheSize, Input(Bool()))
 
   val debugIntRat  = if (params.debugEn) Some(Input(Vec(32, UInt(intSchdParams.pregIdxWidth.W)))) else None
   val debugFpRat   = if (params.debugEn) Some(Input(Vec(32, UInt(fpSchdParams.pregIdxWidth.W)))) else None
