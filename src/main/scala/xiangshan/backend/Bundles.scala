@@ -236,6 +236,9 @@ object Bundles {
     // Todo
     val lqIdx = new LqPtr
     val sqIdx = new SqPtr
+    // regfile prefetch
+    val needPf          = Bool()
+    val predAddr        = UInt(VAddrBits.W)
     // debug module
     val singleStep      = Bool()
     // schedule
@@ -727,6 +730,10 @@ object Bundles {
       val isIndexed = Bool()
       val isMasked = Bool()
     })
+    // regfile prefetch
+    val pfHit = OptionWrapper(params.hasLoadFu, Bool())
+    val currAddr = OptionWrapper(params.hasLoadFu, UInt(VAddrBits.W))
+    // debug
     val debug = new DebugBundle
     val debugInfo = new PerfDebugInfo
   }
