@@ -381,6 +381,16 @@ class BackendImp(override val wrapper: Backend)(implicit p: Parameters) extends 
       case (immInfo, og2ImmInfo) => immInfo := og2ImmInfo
     }
   bypassNetwork.io.fromDataPath.rcData := dataPath.io.toBypassNetworkRCData
+  bypassNetwork.io.fromLoadIQ.zip(memScheduler.io.toBypassNetworkBeforeDelay.get).foreach{ case (fromLoadIQ, toBy) =>
+    fromLoadIQ.zip(toBy).foreach{ case (sink, source) =>
+      sink.valid := source.valid && source.bits.common.needPf.get
+      sink.bits.fromIssueBundle(source.bits)
+      sink.bits.isLoadPf.get := true.B
+      sink.bits.src(0) := SignExt(source.bits.common.predAddr.get, XLEN)
+      sink.bits.imm := 0.U
+      source.ready := true.B
+    }
+  }
   bypassNetwork.io.fromExus.connectExuOutput(_.int)(intExuBlock.io.out)
   bypassNetwork.io.fromExus.connectExuOutput(_.fp)(fpExuBlock.io.out)
   bypassNetwork.io.fromExus.connectExuOutput(_.vf)(vfExuBlock.io.out)
