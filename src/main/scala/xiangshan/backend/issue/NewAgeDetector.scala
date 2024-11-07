@@ -23,11 +23,11 @@ import xiangshan._
 import utils._
 import utility._
 
-class NewAgeDetector(numEntries: Int, numEnq: Int, numDeq: Int)(implicit p: Parameters) extends XSModule {
+class NewAgeDetector(numEntries: Int, numEnq: Int, regOut: Boolean = true)(implicit p: Parameters) extends XSModule {
   val io = IO(new Bundle {
     val enq = Vec(numEnq, Input(Bool()))
-    val canIssue = Vec(numDeq, Input(UInt(numEntries.W)))
-    val out = Vec(numDeq, Output(UInt(numEntries.W)))
+    val clear = Input(UInt(numEntries.W))
+    val out = Output(UInt(numEntries.W))
   })
 
   // age(i)(j): entry i enters queue before entry j
@@ -35,68 +35,52 @@ class NewAgeDetector(numEntries: Int, numEnq: Int, numDeq: Int)(implicit p: Para
   val nextAge = Seq.fill(numEntries)(Seq.fill(numEntries)(Wire(Bool())))
 
   // to reduce reg usage, only use upper matrix
-  def get_age(row: Int, col: Int): Bool = {
-    if (row < col)
-      age(row)(col)
-    else if (row == col)
-      true.B
-    else
-      !age(col)(row)
-  }
+  def get_age(row: Int, col: Int): Bool = if (row <= col) age(row)(col) else !age(col)(row)
   def get_next_age(row: Int, col: Int): Bool = if (row <= col) nextAge(row)(col) else !nextAge(col)(row)
+  def isFlushed(i: Int): Bool = io.clear(i)
 
   //only for row <= col
   for((row, i) <- nextAge.zipWithIndex) {
     for((elem, j) <- row.zipWithIndex) {
-      if (i == j) {
-        // an entry is always older than itself
-        elem := true.B
-      }
-      else if (i < j) {
-        when (io.enq(j)) {
-          // (1) when entry j enqueues from port k,
-          // (1.1) if entry i (<j) enqueues from previous ports, it is older than entry j
-          // (1.2) if entry i does not enqueue, set col(j) older than entry j
-          elem := true.B
-        }.elsewhen (io.enq(i)) {
-          // (2) when entry i enqueues, set row(i) to false
+      if (i <= j) {
+        when(io.enq(i)){
+          elem := io.enq(j) || isFlushed(j) || !get_age(j, j)
+        }.elsewhen(isFlushed(i)) {
           elem := false.B
         }.otherwise {
-          // default: unchanged
-          elem := get_age(i, j)
+          elem := (!io.enq(j) && !isFlushed(j) && get_age(i, j)) || (!io.enq(j) && isFlushed(j)) || (io.enq(j) && get_age(i, i))
         }
-      }
-      else {
+      } else {
         elem := !nextAge(j)(i)
       }
-      age(i)(j) := Mux(io.enq(i) | io.enq(j), elem, age(i)(j))
+      age(i)(j) := elem
     }
   }
 
-  def getOldestCanIssue(get: (Int, Int) => Bool, canIssue: UInt): UInt = {
+  def getOldest(get: (Int, Int) => Bool): UInt = {
     VecInit((0 until numEntries).map(i => {
-      (VecInit((0 until numEntries).map(j => get(i, j))).asUInt | ~canIssue).andR & canIssue(i)
+      VecInit((0 until numEntries).map(j => get(i, j))).asUInt.andR
     })).asUInt
   }
 
-  io.out.zip(io.canIssue).foreach { case (out, canIssue) =>
-    out := getOldestCanIssue(get_age, canIssue)
-  }
+  val best = getOldest(get_age)
+  val nextBest = getOldest(get_next_age)
+
+  io.out := (if (regOut) best else nextBest)
+
+  val ageMatrix = VecInit(age.map(v => VecInit(v).asUInt.andR)).asUInt
+  val symmetricAge = RegNext(nextBest)
+  XSError(ageMatrix =/= symmetricAge, p"age error between ${Hexadecimal(ageMatrix)} and ${Hexadecimal(symmetricAge)}\n")
 }
 
 object NewAgeDetector {
-  def apply(numEntries: Int, enq: Vec[Bool], canIssue: Vec[UInt])(implicit p: Parameters): Vec[Valid[UInt]] = {
-    val age = Module(new NewAgeDetector(numEntries, enq.length, canIssue.length))
+  def apply(numEntries: Int, enq: Vec[Bool], clear: Vec[Bool], canIssue: UInt)(implicit p: Parameters): Valid[UInt] = {
+    val age = Module(new NewAgeDetector(numEntries, enq.length, regOut = true))
     age.io.enq := enq
-    age.io.canIssue := canIssue
-    val outVec = Wire(Vec(canIssue.length, Valid(UInt(numEntries.W))))
-    outVec.zipWithIndex.foreach { case (out, i) =>
-      out.valid := canIssue(i).orR
-      out.bits := age.io.out(i)
-      when (out.valid) {
-        assert(PopCount(out.bits) === 1.U, s"out ($i) is not ont-hot when there is at least one entry can be issued\n")
-      }
-    }
-    outVec
+    age.io.clear := clear.asUInt
+    val out = Wire(Valid(UInt(clear.getWidth.W)))
+    out.valid := (canIssue & age.io.out).orR
+    out.bits := age.io.out
+    out
   }
 }

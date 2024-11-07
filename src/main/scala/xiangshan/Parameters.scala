@@ -176,7 +176,7 @@ case class XSCoreParameters
   RabSize: Int = 256,
   VTypeBufferSize: Int = 64, // used to reorder vtype
   IssueQueueSize: Int = 24,
-  IssueQueueCompEntrySize: Int = 16,
+  IssueQueueCompEntrySize: Int = 22,
   dpParams: DispatchParameters = DispatchParameters(
     IntDqSize = 16,
     FpDqSize = 16,
